@@ -21,7 +21,9 @@ Or, for more control over roslaunch, use:
 p = pl.PyRosLaunch(config_list)
 p.start()
 raw_input("press enter to stop") # or p.spin(), p.spinOnce(), etc.
-p.shutdown() #call this to kill all nodes launched. can't reuse p (i.e. call start) after shutdown though.
+#Call this to kill all nodes launched.
+#Note: you can't reuse p (i.e. call start again) after calling shutdown.
+p.shutdown()  
 ```
 
 Or if you just want to call a single launch file:
