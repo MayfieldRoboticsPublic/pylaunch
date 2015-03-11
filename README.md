@@ -15,3 +15,11 @@ configs = [pl.Node("rospy_tutorials", "talker", "talker2",
 
 pl.launch(configs)
 ```
+Or, for more control over roslaunch, use:
+
+```python
+p = PyRosLaunch(config_list)
+p.start()
+raw_input("press enter to stop") # or p.spin(), p.spinOnce(), etc.
+p.shutdown() #call this to kill all nodes launched.
+```
