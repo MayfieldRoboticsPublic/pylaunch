@@ -23,3 +23,12 @@ p.start()
 raw_input("press enter to stop") # or p.spin(), p.spinOnce(), etc.
 p.shutdown() #call this to kill all nodes launched.
 ```
+
+Or if you just want to call a single launch file:
+
+```python
+p = pl.LaunchFileRunner('my_package', 'my_launch_file.launch')
+p.start()
+raw_input("press enter to stop")
+p.shutdown()
+```
