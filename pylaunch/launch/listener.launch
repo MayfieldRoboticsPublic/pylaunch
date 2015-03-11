@@ -1,0 +1,8 @@
+<launch>
+  <arg name="some_arg" default=""/>
+
+  <node pkg="rospy_tutorials" type="listener" name="listener$(arg some_arg)" args="">
+        <remap from="chatter" to="hello"/>
+  </node>
+
+</launch>
