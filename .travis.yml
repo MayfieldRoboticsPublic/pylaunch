@@ -1,0 +1,29 @@
+language:
+  - cpp
+  - python
+python:
+  - "2.7"
+compiler:
+  - gcc
+
+notifications:
+  email:
+    recipients:
+      - dev@mayfieldrobotics.com
+    on_success: change #[always|never|change] # default: change
+    on_failure: change #[always|never|change] # default: always
+
+install:
+  - export CI_SOURCE_PATH=$(pwd)
+  - sudo apt-get install python-pip
+  - sudo pip install ansible==1.8.2
+  - cd ~
+  - git clone -b master git@github.com:mayfieldrobotics/embedded-ansible
+  - ansible-playbook -i "localhost," -c local ~/embedded-ansible/ansible/ros_hydro.yml
+  - mkdir -p ~/pylaunch_ws/src
+  - mv $CI_SOURCE_PATH ~/pylaunch_ws/src/
+
+script:
+  - source /opt/ros/hydro/setup.bash
+  - cd ~/pylaunch_ws
+  - catkin_make test
