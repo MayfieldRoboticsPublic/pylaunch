@@ -19,7 +19,6 @@ class TestPylaunch(unittest.TestCase):
 
             p = pl.PyRosLaunch(configs)
             p.start()
-            time.sleep(10)
             p.shutdown()
         except:
             self.fail("Shouldn't raise exceptions.")
@@ -28,7 +27,6 @@ class TestPylaunch(unittest.TestCase):
         try:
             p = pl.LaunchFileRunner("pylaunch", "talker.launch")
             p.start()
-            time.sleep(10)
             p.shutdown()
         except:
             self.fail("Shouldn't raise exceptions.")
