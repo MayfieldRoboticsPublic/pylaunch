@@ -26,7 +26,7 @@ raw_input("press enter to stop") # or p.spin(), p.spinOnce(), etc.
 p.shutdown()  
 ```
 
-Or if you just want to call a single launch file:
+Else, if you just want to call a single launch file:
 
 ```python
 p = pl.LaunchFileRunner('my_package', 'my_launch_file.launch')
