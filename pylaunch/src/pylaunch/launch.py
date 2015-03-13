@@ -22,6 +22,14 @@ class PyRosLaunchItem(object):
     def process(self, context, ros_launch_config):
         raise RuntimeError('Unimplemented')
 
+def py_types_to_string(v):
+    if type(v) == bool:
+        return str(v).lower()
+
+    if type(v) == int or type(v) == float:
+        return str(v)
+    
+    return v
 
 class Include(PyRosLaunchItem):
 
@@ -37,7 +45,7 @@ class Include(PyRosLaunchItem):
         context = rloader.LoaderContext(rn.get_ros_namespace(), self.file_path)
         child_ns = context.include_child(None, self.file_path)
         for k, v in self.args.iteritems():
-            child_ns.add_arg(k, value=v)
+            child_ns.add_arg(k, value=py_types_to_string(v))
 
         rloader.process_include_args(child_ns)
 
@@ -71,7 +79,7 @@ class Node(PyRosLaunchItem):
         #Add all our params to the ROSLaunchConfig
         param_ns = context.child(self.node_name)
         for name, value in self.params.iteritems():
-            p = rr.Param(param_ns.ns + name, value)
+            p = rr.Param(param_ns.ns + name, py_types_to_string(value))
             ros_launch_config.add_param(p, verbose=self.verbose)
 
         #Add to a LoaderContext verify that names are legal
