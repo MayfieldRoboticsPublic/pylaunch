@@ -7,13 +7,13 @@ import pylaunch as pl
 
 #pass in package_name, executable name, and name of node
 configs = [pl.Node("rospy_tutorials", "talker", "talker2",
-                # passing in node parameters
+                # passing in node parameters (optional)
                 params={'calibrate_time': False},
-                # supports namespaces (optional)
+                # passing in namespaces (optional)
                 namespace="/",
-                # passing in args for executable
+                # passing in args for executable (optional)
                 args="--my-arg",
-                # remapping topics
+                # remapping topics (optional)
                 remaps=[('chatter', 'hello_topic')]),
            # Including external launch files (params are where <arg> tags used to go)
            pl.Include('pylaunch', 'listener.launch', params={'some_arg': '21'})]
