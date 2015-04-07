@@ -13,7 +13,6 @@ import os.path as pt
 class FileNotFoundException(Exception):
     pass
 
-
 class PyRosLaunchItem(object):
 
     def __init__(self):
@@ -65,7 +64,17 @@ class Include(PyRosLaunchItem):
 
 class Node(PyRosLaunchItem):
 
-    def __init__(self, package_name, node_type, node_name, params=None, remaps=None):
+    def __init__(self, package_name, node_type, node_name, args=None, params=None, remaps=None, namespace='/'):
+        '''
+        Args:
+
+            package_name (string)
+            node_type (string): executable name in package.
+            node_name (string): name for node after launching
+            args (string): string to pass to executable
+            params (dict): {'name': value (int, string, bool)}
+            remaps (list of tuples): [('from_topic', 'to_topic')]
+        '''
         super(PyRosLaunchItem, self).__init__()
 
         self.package_name = package_name
@@ -74,6 +83,8 @@ class Node(PyRosLaunchItem):
 
         self.params = params if params is not None else {}
         self.remaps = remaps if remaps is not None else []
+        self.args = args
+        self.namespace = namespace
 
     def process(self, context, ros_launch_config):
         #Add all our params to the ROSLaunchConfig
@@ -92,7 +103,9 @@ class Node(PyRosLaunchItem):
                             self.node_name,
                             remap_args=remap_ns.remap_args(),
                             # Setting this pipes mutes the node's stdout.
-                            namespace=param_ns.ns) 
+                            #namespace=param_ns.ns, 
+                            namespace=self.namespace, 
+                            args=self.args) 
         ros_launch_config.add_node(self.node, self.verbose)
 
 
