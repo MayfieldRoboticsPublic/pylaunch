@@ -9,6 +9,7 @@ import rosgraph.names as rn
 import roslaunch.core as rr
 import sys
 import os.path as pt
+import abc
 
 class FileNotFoundException(Exception):
     pass
@@ -17,10 +18,12 @@ class PyRosLaunchItem(object):
     '''
         Abstract class for each item launched by pylaunch.
     '''
+    __metaclass__ = abc.ABCMeta
 
     def __init__(self):
         self.verbose = False
 
+    @abc.abstractmethod
     def process(self, context, ros_launch_config):
         '''
             Modifies ROS launch innards to launch whichever item this
@@ -31,7 +34,7 @@ class PyRosLaunchItem(object):
             context (roslaunch.loader.LoaderContext)
             ros_launch_config (roslaunch.config.ROSLaunchConfig)
         '''
-        raise RuntimeError('Unimplemented')
+        pass
 
 def py_types_to_string(v):
     '''
