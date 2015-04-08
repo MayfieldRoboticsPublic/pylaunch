@@ -5,13 +5,18 @@ Library for writing and calling roslaunch files in Python.
 ```python
 import pylaunch as pl
 
+#pass in package_name, executable name, and name of node
 configs = [pl.Node("rospy_tutorials", "talker", "talker2",
-                # passing in node pararmeters
+                # passing in node parameters (optional)
                 params={'calibrate_time': False},
-                # remapping topics
+                # passing in namespaces (optional)
+                namespace="/",
+                # passing in args for executable (optional)
+                args="--my-arg",
+                # remapping topics (optional)
                 remaps=[('chatter', 'hello_topic')]),
-           # including external launch files
-           pl.Include('pylaunch', 'listener.launch', args={'some_arg': '21'})]
+           # Including external launch files (params are where <arg> tags used to go)
+           pl.Include('pylaunch', 'listener.launch', params={'some_arg': '21'})]
 
 pl.launch(configs)
 ```

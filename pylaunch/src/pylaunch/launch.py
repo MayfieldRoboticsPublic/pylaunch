@@ -9,20 +9,46 @@ import rosgraph.names as rn
 import roslaunch.core as rr
 import sys
 import os.path as pt
+import abc
 
 class FileNotFoundException(Exception):
     pass
 
-
 class PyRosLaunchItem(object):
+    '''
+        Abstract class for each item launched by pylaunch.
+    '''
+    __metaclass__ = abc.ABCMeta
 
     def __init__(self):
         self.verbose = False
 
+    @abc.abstractmethod
     def process(self, context, ros_launch_config):
-        raise RuntimeError('Unimplemented')
+        '''
+            Modifies ROS launch innards to launch whichever item this
+            is.
+
+            Args:
+
+            context (roslaunch.loader.LoaderContext)
+            ros_launch_config (roslaunch.config.ROSLaunchConfig)
+        '''
+        pass
 
 def py_types_to_string(v):
+    '''
+        Convert a Python value to its string representation for
+        roslaunch.
+
+        Args:
+
+        v (int, bool, string, float)
+
+        Returns:
+
+        string representing this native python type
+    '''
     if type(v) == bool:
         return str(v).lower()
 
@@ -32,19 +58,29 @@ def py_types_to_string(v):
     return v
 
 class Include(PyRosLaunchItem):
+    '''
+        Represents an Include statement in roslaunch.
 
-    def __init__(self, package_name, launch_file_name, args=None):
+        Args:
+            package_name (string)
+            launch_file_name (string)
+            params (dict): {'name': value (int, string, bool)}
+                            (normally called 'args' in roslaunch for
+                            an include directive)
+    '''
+
+    def __init__(self, package_name, launch_file_name, params=None):
         super(PyRosLaunchItem, self).__init__()
         l = roslib.packages.find_resource(package_name, launch_file_name)
         if len(l) == 0:
             raise FileNotFoundException("Include error. Package %s doesn't containt %s." % (package_name, launch_file_name))
         self.file_path = l[0]
-        self.args = {} if args is None else args
+        self.params = {} if params is None else params
 
     def process(self, context, ros_launch_config):
         context = rloader.LoaderContext(rn.get_ros_namespace(), self.file_path)
         child_ns = context.include_child(None, self.file_path)
-        for k, v in self.args.iteritems():
+        for k, v in self.params.iteritems():
             child_ns.add_arg(k, value=py_types_to_string(v))
 
         rloader.process_include_args(child_ns)
@@ -64,8 +100,21 @@ class Include(PyRosLaunchItem):
 
 
 class Node(PyRosLaunchItem):
+    '''
+    Represents a ROS node to launch.
 
-    def __init__(self, package_name, node_type, node_name, params=None, remaps=None):
+    Args:
+
+        package_name (string)
+        node_type (string): executable name in package.
+        node_name (string): name for node after launching
+        args (string): string to pass to executable
+        params (dict): {'name': value (int, string, bool)}
+        remaps (list of tuples): [('from_topic', 'to_topic')]
+        namespace (string): namespace to stuff node into.
+    '''
+
+    def __init__(self, package_name, node_type, node_name, args=None, params=None, remaps=None, namespace='/'):
         super(PyRosLaunchItem, self).__init__()
 
         self.package_name = package_name
@@ -74,6 +123,8 @@ class Node(PyRosLaunchItem):
 
         self.params = params if params is not None else {}
         self.remaps = remaps if remaps is not None else []
+        self.args = args
+        self.namespace = namespace
 
     def process(self, context, ros_launch_config):
         #Add all our params to the ROSLaunchConfig
@@ -92,7 +143,9 @@ class Node(PyRosLaunchItem):
                             self.node_name,
                             remap_args=remap_ns.remap_args(),
                             # Setting this pipes mutes the node's stdout.
-                            namespace=param_ns.ns) 
+                            #namespace=param_ns.ns, 
+                            namespace=self.namespace, 
+                            args=self.args) 
         ros_launch_config.add_node(self.node, self.verbose)
 
 
@@ -110,6 +163,12 @@ class PyRosLaunch(roslaunch_parent.ROSLaunchParent):
         p.start()
         raw_input("press enter to stop") # or p.spin(), p.spinOnce(), etc.
         p.shutdown()
+
+        Args:
+
+        config_list (list): list of PyRosLaunchItem objects.
+        port (int): port number.
+        verbose (bool): whether each node should be verbose.
     """
 
     def __init__(self, config_list, port=None, verbose=False):
@@ -145,6 +204,10 @@ class LaunchFileRunner(roslaunch_parent.ROSLaunchParent):
         raw_input("press enter to stop")
         p.shutdown()
 
+        Args:
+
+        package_name (string)
+        launch_file_name (string)
     """
 
     def __init__(self, package_name, launch_file_name):

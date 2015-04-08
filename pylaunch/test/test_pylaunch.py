@@ -15,7 +15,7 @@ class TestPylaunch(unittest.TestCase):
             configs = [pl.Node("rospy_tutorials", "talker", "talker2",
                             params={'calibrate_time': False},
                             remaps=[('chatter', 'hello_topic')]),
-                       pl.Include('pylaunch', 'listener.launch', args={'some_arg': '21'})]
+                       pl.Include('pylaunch', 'listener.launch', params={'some_arg': '21'})]
 
             p = pl.PyRosLaunch(configs)
             p.start()
