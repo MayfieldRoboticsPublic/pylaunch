@@ -52,7 +52,7 @@ def py_types_to_string(v):
     if type(v) == bool:
         return str(v).lower()
 
-    if type(v) == int or type(v) == float:
+    if type(v) in (int, float):
         return str(v)
     
     return v
