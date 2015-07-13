@@ -1,7 +1,7 @@
 # pylaunch [![Build Status](https://magnum.travis-ci.com/mayfieldrobotics/pylaunch.svg?token=qHBoPmgQbWPVxfoYZkz1&branch=master)](https://magnum.travis-ci.com/mayfieldrobotics/pylaunch)
 Library for writing and calling roslaunch files in Python.
 
-Maintainer: [haidai](https://github.com/haidai)
+**Maintainer**: [haidai](https://github.com/haidai)
 
 ### Example
 ```python
