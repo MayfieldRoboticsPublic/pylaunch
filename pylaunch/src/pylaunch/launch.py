@@ -10,6 +10,12 @@ import roslaunch.core as rr
 import sys
 import os.path as pt
 import abc
+import rospkg
+
+def get_path(package_name):
+    ros_pack = rospkg.RosPack()
+    return ros_pack.get_path(package_name)[0]
+
 
 class FileNotFoundException(Exception):
     pass
@@ -57,6 +63,7 @@ def py_types_to_string(v):
     
     return v
 
+
 class Include(PyRosLaunchItem):
     '''
         Represents an Include statement in roslaunch.
@@ -97,6 +104,17 @@ class Include(PyRosLaunchItem):
 
         rloader.post_process_include_args(child_ns)
         #print_context_vars(child_ns)
+
+class RosParam(PyRosLaunchItem):
+    def __init__(self, command, param_file, namespace='/'):
+        super(PyRosLaunchItem, self).__init__()
+        self.command = command
+        self.param_file = param_file
+        self.namespace = namespace
+
+    def process(self, context, ros_launch_config):
+        self.load_rosparam(context, ros_launch_config, self.command, param, 
+            file=self.param_file)
 
 
 class Node(PyRosLaunchItem):
