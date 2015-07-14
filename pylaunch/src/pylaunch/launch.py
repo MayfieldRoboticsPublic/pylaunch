@@ -108,7 +108,16 @@ class Include(PyRosLaunchItem):
 
 
 class RosParam(PyRosLaunchItem):
-    def __init__(self, command, param_file, namespace='/'):
+    '''
+        Represents a rosparam statement in roslaunch.
+
+        Args:
+
+            param_file (string) yaml file to load
+            command (string) one of of 'load', 'dump', or 'delete'
+            namespace (string) scope the params to a namespace
+    '''
+    def __init__(self, param_file, command, namespace='/'):
         super(PyRosLaunchItem, self).__init__()
         self.command = command
         self.param_file = param_file
