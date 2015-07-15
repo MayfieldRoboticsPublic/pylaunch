@@ -12,27 +12,21 @@ class TestPylaunch(unittest.TestCase):
             so we'll settle for launching the entire thing and
             catching all exceptions as a sanity check.
         """
-        try:
-            configs = [pl.Node("rospy_tutorials", "talker", "talker2",
-                            params={'calibrate_time': False},
-                            remaps=[('chatter', 'hello_topic')]),
-                       pl.Include('pylaunch', 'listener.launch', params={'some_arg': '21'})]
+        configs = [pl.Node("rospy_tutorials", "talker", "talker2",
+                        params={'calibrate_time': False},
+                        remaps=[('chatter', 'hello_topic')]),
+                   pl.Include('pylaunch', 'listener.launch', params={'some_arg': '21'})]
 
-            p = pl.PyRosLaunch(configs)
-            p.start()
-            time.sleep(3)
-            p.shutdown()
-        except:
-            self.fail("Shouldn't raise exceptions.")
+        p = pl.PyRosLaunch(configs)
+        p.start()
+        time.sleep(3)
+        p.shutdown()
 
     def test_launch_file_runner(self):
-        try:
-            p = pl.LaunchFileRunner("pylaunch", "talker.launch")
-            p.start()
-            time.sleep(3)
-            p.shutdown()
-        except:
-            self.fail("Shouldn't raise exceptions.")
+        p = pl.LaunchFileRunner("pylaunch", "talker.launch")
+        p.start()
+        time.sleep(3)
+        p.shutdown()
 
 if __name__ == '__main__':
     unittest.main()

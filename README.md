@@ -13,8 +13,6 @@ configs = [pl.Node("rospy_tutorials", "talker", "talker2",
                 namespace="/",
                 # respawn (optional)
                 respawn=True,
-                # respawn delays (optional)
-                respawn_delay=2,
                 # output (optional)
                 output="screen",
                 # passing in args for executable (optional)

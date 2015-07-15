@@ -143,12 +143,11 @@ class Node(PyRosLaunchItem):
         remaps (list of tuples): [('from_topic', 'to_topic')]
         namespace (string): namespace to stuff node into.
         respawn (bool)
-        respawn_delay (float) 
         output (string) either 'screen' or 'log'
     '''
 
     def __init__(self, package_name, node_type, node_name, args=None, params=None, remaps=None, 
-                 namespace='/', respawn=False, respawn_delay=0., output=None):
+                 namespace='/', respawn=False, output=None):
         super(PyRosLaunchItem, self).__init__()
 
         self.package_name = package_name
@@ -160,7 +159,6 @@ class Node(PyRosLaunchItem):
         self.args = args
         self.namespace = namespace
         self.respawn = respawn
-        self.respawn_delay = respawn_delay
         self.output = output
 
     def process(self, loader, ros_launch_config):
@@ -185,7 +183,6 @@ class Node(PyRosLaunchItem):
                             namespace=self.namespace, 
                             args=self.args, 
                             respawn=self.respawn,
-                            respawn_delay=self.respawn_delay,
                             output=self.output)
         ros_launch_config.add_node(self.node, self.verbose)
 
