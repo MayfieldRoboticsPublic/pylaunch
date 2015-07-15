@@ -2,6 +2,7 @@
 
 import unittest
 import pylaunch as pl
+import time
 
 class TestPylaunch(unittest.TestCase):
 
@@ -19,6 +20,7 @@ class TestPylaunch(unittest.TestCase):
 
             p = pl.PyRosLaunch(configs)
             p.start()
+            time.sleep(3)
             p.shutdown()
         except:
             self.fail("Shouldn't raise exceptions.")
@@ -27,10 +29,12 @@ class TestPylaunch(unittest.TestCase):
         try:
             p = pl.LaunchFileRunner("pylaunch", "talker.launch")
             p.start()
+            time.sleep(3)
             p.shutdown()
         except:
             self.fail("Shouldn't raise exceptions.")
 
 if __name__ == '__main__':
+    #unittest.main()
     import rosunit
     rosunit.unitrun('pylaunch', 'test_pylaunch', TestPylaunch)
