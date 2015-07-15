@@ -10,6 +10,12 @@ import roslaunch.core as rr
 import sys
 import os.path as pt
 import abc
+import rospkg
+
+def pkg_path(package_name):
+    ros_pack = rospkg.RosPack()
+    return ros_pack.get_path(package_name)
+
 
 class FileNotFoundException(Exception):
     pass
@@ -24,14 +30,15 @@ class PyRosLaunchItem(object):
         self.verbose = False
 
     @abc.abstractmethod
-    def process(self, context, ros_launch_config):
+    def process(self, loader, ros_launch_config):
         '''
             Modifies ROS launch innards to launch whichever item this
             is.
 
             Args:
 
-            context (roslaunch.loader.LoaderContext)
+            loader roslaunch.xmlloader.XmlLoader (context object is in
+                    loader.root_context)
             ros_launch_config (roslaunch.config.ROSLaunchConfig)
         '''
         pass
@@ -57,6 +64,7 @@ def py_types_to_string(v):
     
     return v
 
+
 class Include(PyRosLaunchItem):
     '''
         Represents an Include statement in roslaunch.
@@ -77,7 +85,7 @@ class Include(PyRosLaunchItem):
         self.file_path = l[0]
         self.params = {} if params is None else params
 
-    def process(self, context, ros_launch_config):
+    def process(self, loader, ros_launch_config):
         context = rloader.LoaderContext(rn.get_ros_namespace(), self.file_path)
         child_ns = context.include_child(None, self.file_path)
         for k, v in self.params.iteritems():
@@ -99,6 +107,28 @@ class Include(PyRosLaunchItem):
         #print_context_vars(child_ns)
 
 
+class RosParam(PyRosLaunchItem):
+    '''
+        Represents a rosparam statement in roslaunch.
+
+        Args:
+
+            param_file (string) yaml file to load
+            command (string) one of of 'load', 'dump', or 'delete'
+            namespace (string) scope the params to a namespace
+    '''
+    def __init__(self, param_file, command, namespace='/'):
+        super(PyRosLaunchItem, self).__init__()
+        self.command = command
+        self.param_file = param_file
+        self.namespace = namespace
+
+    def process(self, loader, ros_launch_config):
+        param = rn.ns_join('', self.namespace)
+        loader.load_rosparam(loader.root_context, ros_launch_config, 
+                self.command, param, self.param_file, '')
+
+
 class Node(PyRosLaunchItem):
     '''
     Represents a ROS node to launch.
@@ -112,9 +142,12 @@ class Node(PyRosLaunchItem):
         params (dict): {'name': value (int, string, bool)}
         remaps (list of tuples): [('from_topic', 'to_topic')]
         namespace (string): namespace to stuff node into.
+        respawn (bool)
+        output (string) either 'screen' or 'log'
     '''
 
-    def __init__(self, package_name, node_type, node_name, args=None, params=None, remaps=None, namespace='/'):
+    def __init__(self, package_name, node_type, node_name, args=None, params=None, remaps=None, 
+                 namespace='/', respawn=False, output=None):
         super(PyRosLaunchItem, self).__init__()
 
         self.package_name = package_name
@@ -125,8 +158,11 @@ class Node(PyRosLaunchItem):
         self.remaps = remaps if remaps is not None else []
         self.args = args
         self.namespace = namespace
+        self.respawn = respawn
+        self.output = output
 
-    def process(self, context, ros_launch_config):
+    def process(self, loader, ros_launch_config):
+        context = loader.root_context
         #Add all our params to the ROSLaunchConfig
         param_ns = context.child(self.node_name)
         for name, value in self.params.iteritems():
@@ -145,7 +181,9 @@ class Node(PyRosLaunchItem):
                             # Setting this pipes mutes the node's stdout.
                             #namespace=param_ns.ns, 
                             namespace=self.namespace, 
-                            args=self.args) 
+                            args=self.args, 
+                            respawn=self.respawn,
+                            output=self.output)
         ros_launch_config.add_node(self.node, self.verbose)
 
 
@@ -187,7 +225,7 @@ class PyRosLaunch(roslaunch_parent.ROSLaunchParent):
 
         for n in config_list:
             n.verbose = verbose
-            n.process(xml_loader.root_context, ros_launch_config)
+            n.process(xml_loader, ros_launch_config)
 
         ros_launch_config.assign_machines()
         self.config = ros_launch_config

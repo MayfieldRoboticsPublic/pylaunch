@@ -15,12 +15,18 @@ configs = [pl.Node("rospy_tutorials", "talker", "talker2",
                 params={'calibrate_time': False},
                 # passing in namespaces (optional)
                 namespace="/",
+                # respawn (optional)
+                respawn=True,
+                # output (optional)
+                output="screen",
                 # passing in args for executable (optional)
                 args="--my-arg",
                 # remapping topics (optional)
                 remaps=[('chatter', 'hello_topic')]),
            # Including external launch files (params are where <arg> tags used to go)
-           pl.Include('pylaunch', 'listener.launch', params={'some_arg': '21'})]
+           pl.Include('pylaunch', 'listener.launch', params={'some_arg': '21'}),
+           # Rosparams loading
+           pl.RosParam(pl.pkg_path('some_package_name') + '/some_dir/my.yaml', 'load')]
 
 pl.launch(configs)
 ```
