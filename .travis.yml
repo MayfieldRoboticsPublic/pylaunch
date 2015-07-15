@@ -20,6 +20,7 @@ install:
   - cd ~
   - git clone -b master git@github.com:mayfieldrobotics/embedded-ansible
   - ansible-playbook -i "localhost," -c local ~/embedded-ansible/ansible/ros_hydro.yml
+  - sudo apt-get install ros-hydro-rospy-tutorials
   - mkdir -p ~/pylaunch_ws/src
   - mv $CI_SOURCE_PATH ~/pylaunch_ws/src/
 
@@ -28,5 +29,4 @@ script:
   - cd ~/pylaunch_ws
   - catkin_make
   - source devel/setup.bash
-  - python src/pylaunch/pylaunch/test/test_pylaunch.py
   - catkin_make test
