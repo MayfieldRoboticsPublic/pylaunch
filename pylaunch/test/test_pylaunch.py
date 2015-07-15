@@ -35,6 +35,6 @@ class TestPylaunch(unittest.TestCase):
             self.fail("Shouldn't raise exceptions.")
 
 if __name__ == '__main__':
-    #unittest.main()
-    import rosunit
-    rosunit.unitrun('pylaunch', 'test_pylaunch', TestPylaunch)
+    unittest.main()
+    #import rosunit
+    #rosunit.unitrun('pylaunch', 'test_pylaunch', TestPylaunch)

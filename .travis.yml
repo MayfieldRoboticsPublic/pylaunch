@@ -26,4 +26,7 @@ install:
 script:
   - source /opt/ros/hydro/setup.bash
   - cd ~/pylaunch_ws
+  - catkin_make
+  - source devel/setup.bash
+  - python src/pylaunch/pylaunch/test/test_pylaunch.py
   - catkin_make test
