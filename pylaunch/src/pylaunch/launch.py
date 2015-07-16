@@ -75,19 +75,25 @@ class Include(PyRosLaunchItem):
             params (dict): {'name': value (int, string, bool)}
                             (normally called 'args' in roslaunch for
                             an include directive)
+            remaps (list of tuples): [('from_topic', 'to_topic')]
     '''
 
-    def __init__(self, package_name, launch_file_name, params=None):
+    def __init__(self, package_name, launch_file_name, remaps=None, params=None):
         super(PyRosLaunchItem, self).__init__()
         l = roslib.packages.find_resource(package_name, launch_file_name)
         if len(l) == 0:
             raise FileNotFoundException("Include error. Package %s doesn't containt %s." % (package_name, launch_file_name))
         self.file_path = l[0]
         self.params = {} if params is None else params
+        self.remaps = [] if remaps is None else remaps
+        
 
     def process(self, loader, ros_launch_config):
         context = rloader.LoaderContext(rn.get_ros_namespace(), self.file_path)
         child_ns = context.include_child(None, self.file_path)
+        for r in self.remaps:
+            context.add_remap(r)
+
         for k, v in self.params.iteritems():
             child_ns.add_arg(k, value=py_types_to_string(v))
 
