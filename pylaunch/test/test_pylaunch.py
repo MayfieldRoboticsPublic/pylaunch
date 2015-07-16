@@ -2,6 +2,29 @@
 
 import unittest
 import pylaunch as pl
+import rospy
+import time
+import std_msgs.msg as std
+import rosgraph as rg
+
+
+def wait_for_subscriber_to_topic(topic_name, time_out):
+    master = rg.Master('')
+    topic_published = False
+    start_time = time.time()
+    while not topic_published:
+        pubs, subs, _  = master.getSystemState()
+        topics = subs
+        for topic in topics:
+            if topic[0] == topic_name:
+                topic_published = True
+                break
+        time.sleep(1/30)
+        if (time.time() - start_time) > time_out:
+            return False
+
+    return topic_published
+
 
 class TestPylaunch(unittest.TestCase):
 
@@ -11,25 +34,37 @@ class TestPylaunch(unittest.TestCase):
             so we'll settle for launching the entire thing and
             catching all exceptions as a sanity check.
         """
-        try:
-            configs = [pl.Node("rospy_tutorials", "talker", "talker2",
-                            params={'calibrate_time': False},
-                            remaps=[('chatter', 'hello_topic')]),
-                       pl.Include('pylaunch', 'listener.launch', params={'some_arg': '21'})]
+        configs = [pl.Node("rospy_tutorials", "talker", "talker2",
+                        params={'calibrate_time': False},
+                        remaps=[('chatter', 'hello_topic')]),
+                   pl.Include('pylaunch', 'listener.launch', params={'some_arg': '21'})]
 
-            p = pl.PyRosLaunch(configs)
-            p.start()
+        p = pl.PyRosLaunch(configs)
+        p.start()
+        rospy.init_node('test')
+        has_subscriber = False
+
+        try:
+            msg = rospy.wait_for_message('/hello_topic', std.String, 10)
+            has_subscriber = wait_for_subscriber_to_topic('/hello', 10)
+        except rospy.exceptions.ROSException as e:
+            self.fail("Failed to launch nodes.")
+        finally:
             p.shutdown()
-        except:
-            self.fail("Shouldn't raise exceptions.")
+
+        if not has_subscriber:
+            self.fail("Failed to launch nodes.")
 
     def test_launch_file_runner(self):
+        p = pl.LaunchFileRunner("pylaunch", "talker.launch")
+        p.start()
+        rospy.init_node('test')
         try:
-            p = pl.LaunchFileRunner("pylaunch", "talker.launch")
-            p.start()
+            msg = rospy.wait_for_message('/chatter', std.String, 10)
+        except rospy.exceptions.ROSException as e:
+            self.fail("Failed to launch nodes.")
+        finally:
             p.shutdown()
-        except:
-            self.fail("Shouldn't raise exceptions.")
 
 if __name__ == '__main__':
     import rosunit
