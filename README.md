@@ -23,7 +23,8 @@ configs = [pl.Node("rospy_tutorials", "talker", "talker2",
                 args="--my-arg",
                 # remapping topics (optional)
                 remaps=[('chatter', 'hello_topic')]),
-           # Including external launch files (params are where <arg> tags used to go)
+           # Including external launch files (params are where <arg> tags used to go).
+           # Also supports topic remaps (same syntax as above for Nodes).
            pl.Include('pylaunch', 'listener.launch', params={'some_arg': '21'}),
            # Rosparams loading
            pl.RosParam(pl.pkg_path('some_package_name') + '/some_dir/my.yaml', 'load')]

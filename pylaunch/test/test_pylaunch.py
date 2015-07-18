@@ -66,6 +66,17 @@ class TestPylaunch(unittest.TestCase):
         finally:
             p.shutdown()
 
+    def test_include_remap(self):
+        p = pl.PyRosLaunch([pl.Include('pylaunch', 'talker.launch', remaps=[('chatter', 'blah_blah')])])
+        p.start()
+        rospy.init_node('test')
+        try:
+            msg = rospy.wait_for_message('/blah_blah', std.String, 10)
+        except rospy.exceptions.ROSException as e:
+            self.fail("Failed to launch nodes.")
+        finally:
+            p.shutdown()
+
 if __name__ == '__main__':
     import rosunit
     rosunit.unitrun('pylaunch', 'test_pylaunch', TestPylaunch)
