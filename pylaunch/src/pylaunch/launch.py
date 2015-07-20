@@ -13,9 +13,39 @@ import abc
 import rospkg
 
 def pkg_path(package_name):
+    '''
+        Locates a ROS package
+
+        Args:
+        package_name (string) name of package to locate.
+
+        Returns:
+        string path to ROS package
+
+    '''
     ros_pack = rospkg.RosPack()
     return ros_pack.get_path(package_name)
 
+def resource_path(package_name, filename):
+    '''
+        Locates a file known to ROS.
+        
+        Args:
+        package_name (string) 
+        filename (string) file in package to locate
+
+        Returns:
+        string path to file
+
+    '''
+    l = roslib.packages.find_resource(package_name, filename)
+    if len(l) == 0:
+        raise FileNotFoundException("Include error. Package %s doesn't containt %s." \
+                                    % (package_name, filename))
+    if len(l) > 1:
+        raise RuntimeError("Multiple files named %s found in package %s" \
+                            % (package_name, filename))
+    return l[0]
 
 class FileNotFoundException(Exception):
     pass
@@ -78,12 +108,12 @@ class Include(PyRosLaunchItem):
             remaps (list of tuples): [('from_topic', 'to_topic')]
     '''
 
-    def __init__(self, package_name, launch_file_name, remaps=None, params=None):
+    def __init__(self, file_path, remaps=None, params=None):
         super(PyRosLaunchItem, self).__init__()
-        l = roslib.packages.find_resource(package_name, launch_file_name)
-        if len(l) == 0:
-            raise FileNotFoundException("Include error. Package %s doesn't containt %s." % (package_name, launch_file_name))
-        self.file_path = l[0]
+        if not pt.isfile(file_path):
+            raise FileNotFoundException("File %s not found." % file_path)
+
+        self.file_path = file_path
         self.params = {} if params is None else params
         self.remaps = [] if remaps is None else remaps
         
