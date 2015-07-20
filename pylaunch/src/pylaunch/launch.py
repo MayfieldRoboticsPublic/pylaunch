@@ -179,6 +179,14 @@ class RosParam(PyRosLaunchItem):
         loader.load_rosparam(loader.root_context, ros_launch_config, 
                 self.command, param, self.param_file, '')
 
+class Param(PyRosLaunchItem):
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
+    def process(self, loader, ros_launch_config):
+        p = rr.Param(self.name, py_types_to_string(self.value))
+        ros_launch_config.add_param(p, verbose=self.verbose)
 
 class Node(PyRosLaunchItem):
     '''
