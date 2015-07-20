@@ -180,13 +180,27 @@ class RosParam(PyRosLaunchItem):
                 self.command, param, self.param_file, '')
 
 class Param(PyRosLaunchItem):
-    def __init__(self, name, value):
+    '''
+        Ros param command.
+    '''
+    def __init__(self, name, value=None, ptype=None, command=None):
+        if value is None and (ptype is None or command is None):
+            raise RuntimeError('Either provide value or ptype and command')
+
         self.name = name
         self.value = value
+        self.ptype = ptype
+        self.command = command
 
     def process(self, loader, ros_launch_config):
-        p = rr.Param(self.name, py_types_to_string(self.value))
-        ros_launch_config.add_param(p, verbose=self.verbose)
+        if self.value is not None:
+            value = py_types_to_string(self.value)
+        else:
+            value = loader.param_value(self.verbose, self.name, self.ptype, 
+                                       value=None, textfile=None, binfile=None, 
+                                       command=self.command)
+
+        ros_launch_config.add_param(rr.Param(self.name, value), verbose=self.verbose)
 
 class Node(PyRosLaunchItem):
     '''
