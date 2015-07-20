@@ -141,7 +141,7 @@ class FInclude(PyRosLaunchItem):
         rloader.post_process_include_args(child_ns)
         #print_context_vars(child_ns)
 
-class Include(Include):
+class Include(FInclude):
     '''
         Represents an Include statement in roslaunch. Needs only package name and filename.
 
