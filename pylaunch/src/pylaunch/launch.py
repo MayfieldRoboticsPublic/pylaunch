@@ -94,14 +94,13 @@ def py_types_to_string(v):
     
     return v
 
-
-class Include(PyRosLaunchItem):
+class FInclude(PyRosLaunchItem):
     '''
-        Represents an Include statement in roslaunch.
+        Represents an Include statement in roslaunch. Uses full paths.
 
         Args:
-            package_name (string)
-            launch_file_name (string)
+            file_path (string): path to file to include.
+
             params (dict): {'name': value (int, string, bool)}
                             (normally called 'args' in roslaunch for
                             an include directive)
@@ -110,8 +109,8 @@ class Include(PyRosLaunchItem):
 
     def __init__(self, file_path, remaps=None, params=None):
         super(PyRosLaunchItem, self).__init__()
-        if not pt.isfile(file_path):
-            raise FileNotFoundException("File %s not found." % file_path)
+        if not pt.exists(file_path):
+            raise RuntimeError("Included file %s does not exist." % file_path)
 
         self.file_path = file_path
         self.params = {} if params is None else params
@@ -141,6 +140,22 @@ class Include(PyRosLaunchItem):
 
         rloader.post_process_include_args(child_ns)
         #print_context_vars(child_ns)
+
+class Include(Include):
+    '''
+        Represents an Include statement in roslaunch. Needs only package name and filename.
+
+        Args:
+            package_name (string)
+            launch_file_name (string)
+            params (dict): {'name': value (int, string, bool)}
+                            (normally called 'args' in roslaunch for
+                            an include directive)
+            remaps (list of tuples): [('from_topic', 'to_topic')]
+    '''
+    def __init__(self, package_name, launch_file_name, remaps=None, params=None):
+        filename = resource_path(package_name, launch_file_name)
+        super(Include, self).__init__(filename, remaps, params)
 
 
 class RosParam(PyRosLaunchItem):
