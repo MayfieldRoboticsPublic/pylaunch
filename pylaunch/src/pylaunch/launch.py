@@ -13,9 +13,39 @@ import abc
 import rospkg
 
 def pkg_path(package_name):
+    '''
+        Locates a ROS package
+
+        Args:
+        package_name (string) name of package to locate.
+
+        Returns:
+        string path to ROS package
+
+    '''
     ros_pack = rospkg.RosPack()
     return ros_pack.get_path(package_name)
 
+def resource_path(package_name, filename):
+    '''
+        Locates a file known to ROS.
+        
+        Args:
+        package_name (string) 
+        filename (string) file in package to locate
+
+        Returns:
+        string path to file
+
+    '''
+    l = roslib.packages.find_resource(package_name, filename)
+    if len(l) == 0:
+        raise FileNotFoundException("Include error. Package %s doesn't containt %s." \
+                                    % (package_name, filename))
+    if len(l) > 1:
+        raise RuntimeError("Multiple files named %s found in package %s" \
+                            % (package_name, filename))
+    return l[0]
 
 class FileNotFoundException(Exception):
     pass
@@ -64,28 +94,31 @@ def py_types_to_string(v):
     
     return v
 
-
-class Include(PyRosLaunchItem):
+class FInclude(PyRosLaunchItem):
     '''
-        Represents an Include statement in roslaunch.
+        Represents an Include statement in roslaunch. Uses full paths.
 
         Args:
-            package_name (string)
-            launch_file_name (string)
+            file_path (string): path to file to include.
+
+            remaps (list of tuples): [('from_topic', 'to_topic')]
+
             params (dict): {'name': value (int, string, bool)}
                             (normally called 'args' in roslaunch for
                             an include directive)
-            remaps (list of tuples): [('from_topic', 'to_topic')]
+
+            rosparams (list): list of RosParam objects
     '''
 
-    def __init__(self, package_name, launch_file_name, remaps=None, params=None):
+    def __init__(self, file_path, remaps=None, params=None, rosparams=None):
         super(PyRosLaunchItem, self).__init__()
-        l = roslib.packages.find_resource(package_name, launch_file_name)
-        if len(l) == 0:
-            raise FileNotFoundException("Include error. Package %s doesn't containt %s." % (package_name, launch_file_name))
-        self.file_path = l[0]
+        if not pt.exists(file_path):
+            raise RuntimeError("Included file %s does not exist." % file_path)
+
+        self.file_path = file_path
         self.params = {} if params is None else params
         self.remaps = [] if remaps is None else remaps
+        self.rosparams = rosparams if rosparams is not None else []
         
 
     def process(self, loader, ros_launch_config):
@@ -96,6 +129,10 @@ class Include(PyRosLaunchItem):
 
         for k, v in self.params.iteritems():
             child_ns.add_arg(k, value=py_types_to_string(v))
+
+        for rp in self.rosparams:
+            rp.set_namespace(rn.ns_join(param_ns, rp.get_namespace()))
+            rp.process(ros_launch_config)
 
         rloader.process_include_args(child_ns)
 
@@ -112,6 +149,28 @@ class Include(PyRosLaunchItem):
         rloader.post_process_include_args(child_ns)
         #print_context_vars(child_ns)
 
+class Include(FInclude):
+    '''
+        Represents an Include statement in roslaunch. Needs only package name and filename.
+
+        Args:
+            package_name (string)
+
+            launch_file_name (string)
+
+            remaps (list of tuples): [('from_topic', 'to_topic')]
+
+            params (dict): {'name': value (int, string, bool)}
+                            (normally called 'args' in roslaunch for
+                            an include directive)
+
+            rosparams (list): list of RosParam objects
+    '''
+    def __init__(self, package_name, launch_file_name, remaps=None, 
+                 params=None, rosparams=None):
+        filename = resource_path(package_name, launch_file_name)
+        super(Include, self).__init__(filename, remaps, params, rosparams)
+
 
 class RosParam(PyRosLaunchItem):
     '''
@@ -120,7 +179,9 @@ class RosParam(PyRosLaunchItem):
         Args:
 
             param_file (string) yaml file to load
+
             command (string) one of of 'load', 'dump', or 'delete'
+
             namespace (string) scope the params to a namespace
     '''
     def __init__(self, param_file, command, namespace='/'):
@@ -129,11 +190,39 @@ class RosParam(PyRosLaunchItem):
         self.param_file = param_file
         self.namespace = namespace
 
+    def get_namespace(self):
+        return self.namespace
+
+    def set_namespace(self, ns):
+        self.namespace = ns
+
     def process(self, loader, ros_launch_config):
         param = rn.ns_join('', self.namespace)
         loader.load_rosparam(loader.root_context, ros_launch_config, 
                 self.command, param, self.param_file, '')
 
+class Param(PyRosLaunchItem):
+    '''
+        Ros param command.
+    '''
+    def __init__(self, name, value=None, ptype=None, command=None):
+        if value is None and (ptype is None or command is None):
+            raise RuntimeError('Either provide value or ptype and command')
+
+        self.name = name
+        self.value = value
+        self.ptype = ptype
+        self.command = command
+
+    def process(self, loader, ros_launch_config):
+        if self.value is not None:
+            value = py_types_to_string(self.value)
+        else:
+            value = loader.param_value(self.verbose, self.name, self.ptype, 
+                                       value=None, textfile=None, binfile=None, 
+                                       command=self.command)
+
+        ros_launch_config.add_param(rr.Param(self.name, value), verbose=self.verbose)
 
 class Node(PyRosLaunchItem):
     '''
@@ -142,17 +231,28 @@ class Node(PyRosLaunchItem):
     Args:
 
         package_name (string)
+
         node_type (string): executable name in package.
+
         node_name (string): name for node after launching
+
         args (string): string to pass to executable
+
         params (dict): {'name': value (int, string, bool)}
+
+        rosparams (list): list of RosParam objects
+        
         remaps (list of tuples): [('from_topic', 'to_topic')]
+
         namespace (string): namespace to stuff node into.
+
         respawn (bool)
+
         output (string) either 'screen' or 'log'
     '''
 
-    def __init__(self, package_name, node_type, node_name, args=None, params=None, remaps=None, 
+    def __init__(self, package_name, node_type, node_name, 
+                 args=None, params=None, rosparams=None, remaps=None, 
                  namespace='/', respawn=False, output=None):
         super(PyRosLaunchItem, self).__init__()
 
@@ -160,6 +260,7 @@ class Node(PyRosLaunchItem):
         self.node_type = node_type
         self.node_name = node_name
 
+        self.rosparams = rosparams if rosparams is not None else []
         self.params = params if params is not None else {}
         self.remaps = remaps if remaps is not None else []
         self.args = args
@@ -174,6 +275,10 @@ class Node(PyRosLaunchItem):
         for name, value in self.params.iteritems():
             p = rr.Param(param_ns.ns + name, py_types_to_string(value))
             ros_launch_config.add_param(p, verbose=self.verbose)
+
+        for rp in self.rosparams:
+            rp.set_namespace(rn.ns_join(param_ns, rp.get_namespace()))
+            rp.process(ros_launch_config)
 
         #Add to a LoaderContext verify that names are legal
         remap_ns = context.child('')
