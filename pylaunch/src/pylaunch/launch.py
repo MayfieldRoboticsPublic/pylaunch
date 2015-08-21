@@ -205,7 +205,7 @@ class Param(PyRosLaunchItem):
     '''
         Ros param command.
     '''
-    def __init__(self, name, value=None, ptype=None, command=None):
+    def __init__(self, name, value=None, ptype='auto', command=None):
         if value is None and (ptype is None or command is None):
             raise RuntimeError('Either provide value or ptype and command')
 
@@ -216,7 +216,9 @@ class Param(PyRosLaunchItem):
 
     def process(self, loader, ros_launch_config):
         if self.value is not None:
-            value = py_types_to_string(self.value)
+            value = loader.param_value(self.verbose, self.name, self.ptype, 
+                                        py_types_to_string(self.value), 
+                                        None, None, None)
         else:
             value = loader.param_value(self.verbose, self.name, self.ptype, 
                                        value=None, textfile=None, binfile=None, 

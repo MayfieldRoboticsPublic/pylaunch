@@ -77,6 +77,23 @@ class TestPylaunch(unittest.TestCase):
         finally:
             p.shutdown()
 
+    def test_param(self):
+        p = pl.PyRosLaunch([pl.Node('rospy_tutorials', 'talker', 'talker2'), 
+                    pl.Param('int_param', 5),
+                    pl.Param('command_param', command='echo hello')])
+        p.start()
+        int_param = rospy.get_param('int_param')
+        command_param = rospy.get_param('command_param')
+
+        self.assertTrue(type(int_param) == int)
+        self.assertTrue(int_param == 5)
+        self.assertTrue(type(command_param) == str)
+        self.assertTrue(command_param == "hello\n")
+        print "got to shutdown"
+        p.shutdown()
+
+
+
 if __name__ == '__main__':
     import rosunit
     rosunit.unitrun('pylaunch', 'test_pylaunch', TestPylaunch)
