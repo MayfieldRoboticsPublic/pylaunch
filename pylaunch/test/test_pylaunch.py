@@ -98,7 +98,20 @@ class TestPylaunch(unittest.TestCase):
         finally:
             p.shutdown()
 
-
+    def test_node_param(self):
+        p = pl.PyRosLaunch([pl.Node('rospy_tutorials', 'talker', 'talker', 
+                                    params={'use_may_nav': False})])
+        p.start()
+        rospy.init_node('test')
+        try:
+            msg = rospy.wait_for_message('/chatter', std.String, 10)
+            use_may_nav = rospy.get_param('/talker/use_may_nav')
+            self.assertTrue(type(use_may_nav) == bool)
+            self.assertTrue(False == use_may_nav)
+        except rospy.exceptions.ROSException as e:
+            self.fail("Failed to launch nodes.")
+        finally:
+            p.shutdown()
 
 if __name__ == '__main__':
     import rosunit
