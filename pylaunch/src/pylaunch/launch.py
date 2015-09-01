@@ -275,7 +275,10 @@ class Node(PyRosLaunchItem):
         #Add all our params to the ROSLaunchConfig
         param_ns = context.child(self.node_name)
         for name, value in self.params.iteritems():
-            p = rr.Param(param_ns.ns + name, py_types_to_string(value))
+            loader_value = loader.param_value(self.verbose, name, 'auto', 
+                                        py_types_to_string(value), 
+                                        None, None, None)
+            p = rr.Param(param_ns.ns + name, loader_value)
             ros_launch_config.add_param(p, verbose=self.verbose)
 
         for rp in self.rosparams:
