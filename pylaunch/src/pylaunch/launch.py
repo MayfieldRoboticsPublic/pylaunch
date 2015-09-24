@@ -184,7 +184,7 @@ class RosParam(PyRosLaunchItem):
 
             namespace (string) scope the params to a namespace
     '''
-    def __init__(self, param_file, command, namespace='/'):
+    def __init__(self, param_file, command='load', namespace='/'):
         super(PyRosLaunchItem, self).__init__()
         self.command = command
         self.param_file = param_file
