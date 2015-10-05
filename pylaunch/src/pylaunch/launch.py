@@ -184,7 +184,7 @@ class RosParam(PyRosLaunchItem):
 
             namespace (string) scope the params to a namespace
     '''
-    def __init__(self, param_file, command, namespace='/'):
+    def __init__(self, param_file, command='load', namespace='/'):
         super(PyRosLaunchItem, self).__init__()
         self.command = command
         self.param_file = param_file
@@ -282,8 +282,8 @@ class Node(PyRosLaunchItem):
             ros_launch_config.add_param(p, verbose=self.verbose)
 
         for rp in self.rosparams:
-            rp.set_namespace(rn.ns_join(param_ns, rp.get_namespace()))
-            rp.process(ros_launch_config)
+            rp.set_namespace(rn.ns_join(param_ns.ns, rp.get_namespace()))
+            rp.process(loader, ros_launch_config)
 
         #Add to a LoaderContext verify that names are legal
         remap_ns = context.child('')
