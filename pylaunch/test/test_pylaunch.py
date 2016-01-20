@@ -113,8 +113,10 @@ class TestPylaunch(unittest.TestCase):
         finally:
             p.shutdown()
 
+    def test_ros_param(self):
+
 if __name__ == '__main__':
-    import rosunit
-    rosunit.unitrun('pylaunch', 'test_pylaunch', TestPylaunch)
-    #unittest.main()
+    #import rosunit
+    #rosunit.unitrun('pylaunch', 'test_pylaunch', TestPylaunch)
+    unittest.main()
 
