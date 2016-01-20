@@ -251,11 +251,13 @@ class Node(PyRosLaunchItem):
         respawn (bool)
 
         output (string) either 'screen' or 'log'
+
+        launch_prefix (string) for things like gdb, valgrind, sudo, etc.
     '''
 
     def __init__(self, package_name, node_type, node_name, 
                  args=None, params=None, rosparams=None, remaps=None, 
-                 namespace='/', respawn=False, output=None):
+                 namespace='/', respawn=False, output=None, launch_prefix=None):
         super(PyRosLaunchItem, self).__init__()
 
         self.package_name = package_name
@@ -269,6 +271,7 @@ class Node(PyRosLaunchItem):
         self.namespace = namespace
         self.respawn = respawn
         self.output = output
+        self.launch_prefix = launch_prefix
 
     def process(self, loader, ros_launch_config):
         context = loader.root_context
@@ -299,7 +302,8 @@ class Node(PyRosLaunchItem):
                             namespace=self.namespace, 
                             args=self.args, 
                             respawn=self.respawn,
-                            output=self.output)
+                            output=self.output, 
+                            launch_prefix=self.launch_prefix)
         ros_launch_config.add_node(self.node, self.verbose)
 
 
