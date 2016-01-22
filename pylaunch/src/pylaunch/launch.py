@@ -184,7 +184,7 @@ class RosParam(PyRosLaunchItem):
 
             namespace (string) scope the params to a namespace
     '''
-    def __init__(self, param_file, command='load', namespace='/'):
+    def __init__(self, param_file, command='load', namespace=None):
         super(PyRosLaunchItem, self).__init__()
         self.command = command
         self.param_file = param_file
@@ -197,7 +197,10 @@ class RosParam(PyRosLaunchItem):
         self.namespace = ns
 
     def process(self, loader, ros_launch_config):
-        param = rn.ns_join('', self.namespace)
+        if self.namespace is None:
+            param = '/'
+        else:
+            param = rn.ns_join('', self.namespace)
         loader.load_rosparam(loader.root_context, ros_launch_config, 
                 self.command, param, self.param_file, '')
 
@@ -251,11 +254,13 @@ class Node(PyRosLaunchItem):
         respawn (bool)
 
         output (string) either 'screen' or 'log'
+
+        launch_prefix (string) for things like gdb, valgrind, sudo, etc.
     '''
 
     def __init__(self, package_name, node_type, node_name, 
                  args=None, params=None, rosparams=None, remaps=None, 
-                 namespace='/', respawn=False, output=None):
+                 namespace='/', respawn=False, output=None, launch_prefix=None):
         super(PyRosLaunchItem, self).__init__()
 
         self.package_name = package_name
@@ -269,6 +274,7 @@ class Node(PyRosLaunchItem):
         self.namespace = namespace
         self.respawn = respawn
         self.output = output
+        self.launch_prefix = launch_prefix
 
     def process(self, loader, ros_launch_config):
         context = loader.root_context
@@ -282,7 +288,10 @@ class Node(PyRosLaunchItem):
             ros_launch_config.add_param(p, verbose=self.verbose)
 
         for rp in self.rosparams:
-            rp.set_namespace(rn.ns_join(param_ns.ns, rp.get_namespace()))
+            if rp.get_namespace() is None:
+                rp.set_namespace(param_ns.ns)
+            else:
+                rp.set_namespace(rn.ns_join(param_ns.ns, rp.get_namespace()))
             rp.process(loader, ros_launch_config)
 
         #Add to a LoaderContext verify that names are legal
@@ -299,7 +308,8 @@ class Node(PyRosLaunchItem):
                             namespace=self.namespace, 
                             args=self.args, 
                             respawn=self.respawn,
-                            output=self.output)
+                            output=self.output, 
+                            launch_prefix=self.launch_prefix)
         ros_launch_config.add_node(self.node, self.verbose)
 
 
