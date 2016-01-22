@@ -132,7 +132,5 @@ class TestPylaunch(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    #import rosunit
-    #rosunit.unitrun('pylaunch', 'test_pylaunch', TestPylaunch)
     unittest.main()
 
