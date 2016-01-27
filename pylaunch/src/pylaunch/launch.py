@@ -1,3 +1,4 @@
+import rospy
 import roslib
 import roslaunch.config as rc
 import rosgraph.network
@@ -7,10 +8,70 @@ import roslaunch.rlutil as rlutil
 import roslaunch.loader as rloader
 import rosgraph.names as rn
 import roslaunch.core as rr
+from roslaunch.nodeprocess import LocalProcess
+from std_msgs.msg import Empty
 import sys
 import os.path as pt
 import abc
 import rospkg
+
+from diagnostic_msgs.msg import DiagnosticArray
+from diagnostic_msgs.msg import DiagnosticStatus
+
+'''
+Hack to make get crashes to trigger a verbose log"
+'''
+
+class PylaunchLoggerNotifier(object):
+    def __init__(self):
+        self.log_pub = None
+        self.diag_pub = None
+
+    def death_cb(self):
+        if(self.log_pub == None):
+            self.log_pub = rospy.Publisher("create_verbose_log", Empty, queue_size=1)
+        if(self.diag_pub == None):
+            self.diag_pub = rospy.Publisher("diagnostics", DiagnosticArray , queue_size=1)
+        notification = Empty()
+        self.log_pub.publish(notification)
+        rospy.sleep(1)
+
+    def publish_diagnostics(self, name, msg):
+        rospy.loginfo("Node: " + name + " has died")
+        darray = DiagnosticArray()
+        dstatus = DiagnosticStatus()
+        dstatus.level = DiagnosticStatus.WARN
+        dstatus.name = "verbose_logger"
+        dstatus.message = name + ": " + msg
+        darray.status.append(dstatus)
+        self.diag_pub.publish(darray)
+
+
+
+    def init_node(self):
+        #Initialize a rosnode if needed
+        if(rospy.get_name() == ""):
+            rospy.init_node("death_notifier")
+
+
+plnotifier = PylaunchLoggerNotifier()
+
+def new_is_alive(self):
+    if(not is_alive(self)):
+        plnotifier.init_node()
+        plnotifier.death_cb()
+        plnotifier.publish_diagnostics(self.name, self.get_exit_description())
+        return False
+    else:
+        return True
+
+is_alive = LocalProcess.is_alive
+if(LocalProcess.is_alive != new_is_alive):
+    LocalProcess.is_alive = new_is_alive
+
+'''
+Regular Pylaunch
+'''
 
 def pkg_path(package_name):
     '''
@@ -29,9 +90,9 @@ def pkg_path(package_name):
 def resource_path(package_name, filename):
     '''
         Locates a file known to ROS.
-        
+
         Args:
-        package_name (string) 
+        package_name (string)
         filename (string) file in package to locate
 
         Returns:
@@ -91,7 +152,7 @@ def py_types_to_string(v):
 
     if type(v) in (int, float):
         return str(v)
-    
+
     return v
 
 class FInclude(PyRosLaunchItem):
@@ -119,7 +180,7 @@ class FInclude(PyRosLaunchItem):
         self.params = {} if params is None else params
         self.remaps = [] if remaps is None else remaps
         self.rosparams = rosparams if rosparams is not None else []
-        
+
 
     def process(self, loader, ros_launch_config):
         context = rloader.LoaderContext(rn.get_ros_namespace(), self.file_path)
@@ -140,7 +201,7 @@ class FInclude(PyRosLaunchItem):
         launch = parser._parse_launch(self.file_path, verbose=self.verbose)
         ros_launch_config.add_roslaunch_file(self.file_path)
         parser._launch_tag(launch, ros_launch_config, filename=self.file_path)
-        default_machine = parser._recurse_load(ros_launch_config, launch.childNodes, 
+        default_machine = parser._recurse_load(ros_launch_config, launch.childNodes,
                                                child_ns,
                                                default_machine=None,
                                                is_core=False,
@@ -166,7 +227,7 @@ class Include(FInclude):
 
             rosparams (list): list of RosParam objects
     '''
-    def __init__(self, package_name, launch_file_name, remaps=None, 
+    def __init__(self, package_name, launch_file_name, remaps=None,
                  params=None, rosparams=None):
         filename = resource_path(package_name, launch_file_name)
         super(Include, self).__init__(filename, remaps, params, rosparams)
@@ -201,7 +262,7 @@ class RosParam(PyRosLaunchItem):
             param = '/'
         else:
             param = rn.ns_join('', self.namespace)
-        loader.load_rosparam(loader.root_context, ros_launch_config, 
+        loader.load_rosparam(loader.root_context, ros_launch_config,
                 self.command, param, self.param_file, '')
 
 class Param(PyRosLaunchItem):
@@ -219,12 +280,12 @@ class Param(PyRosLaunchItem):
 
     def process(self, loader, ros_launch_config):
         if self.value is not None:
-            value = loader.param_value(self.verbose, self.name, self.ptype, 
-                                        py_types_to_string(self.value), 
+            value = loader.param_value(self.verbose, self.name, self.ptype,
+                                        py_types_to_string(self.value),
                                         None, None, None)
         else:
-            value = loader.param_value(self.verbose, self.name, self.ptype, 
-                                       value=None, textfile=None, binfile=None, 
+            value = loader.param_value(self.verbose, self.name, self.ptype,
+                                       value=None, textfile=None, binfile=None,
                                        command=self.command)
 
         ros_launch_config.add_param(rr.Param(self.name, value), verbose=self.verbose)
@@ -246,7 +307,7 @@ class Node(PyRosLaunchItem):
         params (dict): {'name': value (int, string, bool)}
 
         rosparams (list): list of RosParam objects
-        
+
         remaps (list of tuples): [('from_topic', 'to_topic')]
 
         namespace (string): namespace to stuff node into.
@@ -258,11 +319,11 @@ class Node(PyRosLaunchItem):
         launch_prefix (string) for things like gdb, valgrind, sudo, etc.
     '''
 
-    def __init__(self, package_name, node_type, node_name, 
-                 args=None, params=None, rosparams=None, remaps=None, 
+
+    def __init__(self, package_name, node_type, node_name,
+                 args=None, params=None, rosparams=None, remaps=None,
                  namespace='/', respawn=False, output=None, launch_prefix=None):
         super(PyRosLaunchItem, self).__init__()
-
         self.package_name = package_name
         self.node_type = node_type
         self.node_name = node_name
@@ -281,8 +342,8 @@ class Node(PyRosLaunchItem):
         #Add all our params to the ROSLaunchConfig
         param_ns = context.child(self.node_name)
         for name, value in self.params.iteritems():
-            loader_value = loader.param_value(self.verbose, name, 'auto', 
-                                        py_types_to_string(value), 
+            loader_value = loader.param_value(self.verbose, name, 'auto',
+                                        py_types_to_string(value),
                                         None, None, None)
             p = rr.Param(param_ns.ns + name, loader_value)
             ros_launch_config.add_param(p, verbose=self.verbose)
@@ -304,11 +365,11 @@ class Node(PyRosLaunchItem):
                             self.node_name,
                             remap_args=remap_ns.remap_args(),
                             # Setting this pipes mutes the node's stdout.
-                            #namespace=param_ns.ns, 
-                            namespace=self.namespace, 
-                            args=self.args, 
+                            #namespace=param_ns.ns,
+                            namespace=self.namespace,
+                            args=self.args,
                             respawn=self.respawn,
-                            output=self.output, 
+                            output=self.output,
                             launch_prefix=self.launch_prefix)
         ros_launch_config.add_node(self.node, self.verbose)
 
@@ -346,7 +407,7 @@ class PyRosLaunch(roslaunch_parent.ROSLaunchParent):
 
         xml_loader = roslaunch.xmlloader.XmlLoader()
         rc.load_roscore(xml_loader, ros_launch_config, verbose=verbose)
-        xml_loader.root_context = rloader.LoaderContext(rn.get_ros_namespace(), 
+        xml_loader.root_context = rloader.LoaderContext(rn.get_ros_namespace(),
                                     pt.splitext(pt.split(sys.argv[0])[-1])[0])
 
         for n in config_list:
@@ -404,7 +465,3 @@ def run_py_ros_launch():
     p.start()
     raw_input("press enter to stop")
     p.shutdown()
-    
-
-
-
