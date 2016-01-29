@@ -9,7 +9,7 @@ import roslaunch.loader as rloader
 import rosgraph.names as rn
 import roslaunch.core as rr
 from roslaunch.nodeprocess import LocalProcess
-from std_msgs.msg import Empty
+from std_msgs.msg import String
 import sys
 import os.path as pt
 import abc
@@ -27,12 +27,13 @@ class PylaunchLoggerNotifier(object):
         self.log_pub = None
         self.diag_pub = None
 
-    def death_cb(self):
+    def death_cb(self, node_name):
         if(self.log_pub == None):
-            self.log_pub = rospy.Publisher("create_verbose_log", Empty, queue_size=1)
+            self.log_pub = rospy.Publisher("create_verbose_log", String, queue_size=1)
         if(self.diag_pub == None):
             self.diag_pub = rospy.Publisher("diagnostics", DiagnosticArray , queue_size=1)
-        notification = Empty()
+        notification = String()
+        notification.data = node_name
         self.log_pub.publish(notification)
         rospy.sleep(1)
 
@@ -59,7 +60,7 @@ plnotifier = PylaunchLoggerNotifier()
 def new_is_alive(self):
     if(not is_alive(self)):
         plnotifier.init_node()
-        plnotifier.death_cb()
+        plnotifier.death_cb(self.name)
         plnotifier.publish_diagnostics(self.name, self.get_exit_description())
         return False
     else:
