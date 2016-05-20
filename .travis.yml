@@ -28,7 +28,7 @@ notifications:
 
 install:
   - export CI_SOURCE_PATH=$(pwd)
-  - sudo apt-get install python-pip
+  - sudo apt-get install -y python-pip
   - sudo pip install ansible==1.8.2
   - cd ~
   - git clone -b master git@github.com:mayfieldrobotics/embedded-ansible
