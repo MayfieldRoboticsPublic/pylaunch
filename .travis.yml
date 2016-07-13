@@ -5,6 +5,7 @@ branches:
   only:
     - master
     - develop
+    - /^rc-.+$/
 
 env:
   matrix:
@@ -28,11 +29,11 @@ script:
       if [ "$ARCH" = "arm" ]; then
         ssh -o StrictHostKeyChecking=no -A -p 12422 vpn.mayrobo.com \
           docker run --rm -v \$SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent mayfieldrobotics/gizmo_base:ros_indigo_arm \
-          "sh -c 'mkdir -pm 700 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts && git clone git@github.com:mayfieldrobotics/embedded-ansible && cd embedded-ansible/deb-build && ./build.py -d maydistro/may.yaml $repo'"
+          "sh -c 'mkdir -pm 700 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts && git clone git@github.com:mayfieldrobotics/embedded-ansible && cd embedded-ansible/deb-build && ./build.py -a $TRAVIS_BRANCH -b $TRAVIS_BRANCH -s develop $CATKIN_IGNORE $repo'"
       elif [ "$ARCH" = "x86" ]; then
         docker run --rm -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent -v $TRAVIS_BUILD_DIR:/root/$repo \
           mayfieldrobotics/gizmo_base:ros_indigo_x86 \
-          sh -c "mkdir -pm 700 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts && git clone git@github.com:mayfieldrobotics/embedded-ansible && cd embedded-ansible/deb-build && ./build.py -d maydistro/may.yaml -r /root/$repo $repo"
+          sh -c "mkdir -pm 700 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts && git clone git@github.com:mayfieldrobotics/embedded-ansible && cd embedded-ansible/deb-build && ./build.py -r /root/$repo -a $TRAVIS_BRANCH -s develop $CATKIN_IGNORE $repo"
       fi
     else
       if [ "$ARCH" = "x86" ]; then
