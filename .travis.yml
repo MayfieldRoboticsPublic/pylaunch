@@ -1,10 +1,16 @@
-language:
-  - cpp
-  - python
-python:
-  - "2.7"
-compiler:
-  - gcc
+services:
+  - docker
+
+branches:
+  only:
+    - master
+    - develop
+    - /^rc-.+$/
+
+env:
+  matrix:
+    - ARCH=arm
+    - ARCH=x86
 
 notifications:
   email:
@@ -14,19 +20,36 @@ notifications:
     on_failure: change #[always|never|change] # default: always
 
 install:
-  - export CI_SOURCE_PATH=$(pwd)
-  - sudo apt-get install python-pip
-  - sudo pip install ansible==1.8.2
-  - cd ~
-  - git clone -b master git@github.com:mayfieldrobotics/embedded-ansible
-  - ansible-playbook -i "localhost," -c local ~/embedded-ansible/ansible/ros_hydro.yml
-  - sudo apt-get install ros-hydro-rospy-tutorials
-  - mkdir -p ~/pylaunch_ws/src
-  - mv $CI_SOURCE_PATH ~/pylaunch_ws/src/
+  - $DOCKER_READONLY
 
 script:
-  - source /opt/ros/hydro/setup.bash
-  - cd ~/pylaunch_ws
-  - catkin_make
-  - source devel/setup.bash
-  - catkin_make test
+  - |
+    repo=$(echo $TRAVIS_REPO_SLUG | cut -d/ -f2)
+    if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+      if [ "$ARCH" = "arm" ]; then
+        ssh -o StrictHostKeyChecking=no -A -p 12422 vpn.mayrobo.com \
+          docker run --rm -v \$SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent mayfieldrobotics/gizmo_base:ros_indigo_arm \
+          "sh -c 'mkdir -pm 700 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts && git clone git@github.com:mayfieldrobotics/embedded-ansible && cd embedded-ansible/deb-build && ./build.py -a $TRAVIS_BRANCH -b $TRAVIS_BRANCH -s develop $CATKIN_IGNORE $repo'"
+      elif [ "$ARCH" = "x86" ]; then
+        docker run --rm -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent -v $TRAVIS_BUILD_DIR:/root/$repo \
+          mayfieldrobotics/gizmo_base:ros_indigo_x86 \
+          sh -c "mkdir -pm 700 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts && git clone git@github.com:mayfieldrobotics/embedded-ansible && cd embedded-ansible/deb-build && ./build.py -r /root/$repo -a $TRAVIS_BRANCH -s develop $CATKIN_IGNORE $repo"
+      fi
+    else
+      if [ "$ARCH" = "x86" ]; then
+        docker run --rm \
+          -v $TRAVIS_BUILD_DIR:/root/$repo \
+          ros:indigo \
+          sh -ce "
+            apt-get update
+            apt-get install -y build-essential ros-indigo-rospy-tutorials
+            mkdir -p /root/ws/src
+            ln -s /root/$repo /root/ws/src/
+            . /opt/ros/indigo/setup.sh
+            cd /root/ws
+            catkin_make
+            . devel/setup.sh
+            nosetests /root/ws/src/pylaunch/pylaunch/test/test_pylaunch.py
+          "
+      fi
+    fi

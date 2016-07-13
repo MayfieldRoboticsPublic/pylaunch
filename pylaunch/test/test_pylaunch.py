@@ -6,6 +6,7 @@ import rospy
 import time
 import std_msgs.msg as std
 import rosgraph as rg
+import os.path as pt
 
 
 def wait_for_subscriber_to_topic(topic_name, time_out):
@@ -77,6 +78,59 @@ class TestPylaunch(unittest.TestCase):
         finally:
             p.shutdown()
 
+    def test_param(self):
+        p = pl.PyRosLaunch([pl.Node('rospy_tutorials', 'talker', 'talker2'), 
+                    pl.Param('int_param', 5),
+                    pl.Param('command_param', command='echo hello')])
+        p.start()
+
+        rospy.init_node('test')
+        try:
+            msg = rospy.wait_for_message('/chatter', std.String, 10)
+            int_param = rospy.get_param('int_param')
+            command_param = rospy.get_param('command_param')
+
+            self.assertTrue(type(int_param) == int)
+            self.assertTrue(int_param == 5)
+            self.assertTrue(type(command_param) == str)
+            self.assertTrue(command_param == "hello\n")
+        except rospy.exceptions.ROSException as e:
+            self.fail("Failed to launch nodes.")
+        finally:
+            p.shutdown()
+
+    def test_node_param(self):
+        p = pl.PyRosLaunch([pl.Node('rospy_tutorials', 'talker', 'talker', 
+                                    params={'use_may_nav': False})])
+        p.start()
+        rospy.init_node('test')
+        try:
+            msg = rospy.wait_for_message('/chatter', std.String, 10)
+            use_may_nav = rospy.get_param('/talker/use_may_nav')
+            self.assertTrue(type(use_may_nav) == bool)
+            self.assertTrue(False == use_may_nav)
+        except rospy.exceptions.ROSException as e:
+            self.fail("Failed to launch nodes.")
+        finally:
+            p.shutdown()
+
+    def test_ros_param(self):
+        p = pl.PyRosLaunch([pl.Node('rospy_tutorials', 'talker', 'talker', 
+                rosparams=[pl.RosParam(pt.join(pl.pkg_path('pylaunch'), 
+                'test', 'param.yml'))])])
+        p.start()
+        rospy.init_node('test')
+        try:
+            msg = rospy.wait_for_message('/chatter', std.String, 10)
+            param = rospy.get_param('/talker/a_param')
+            self.assertTrue(1332 == param)
+            self.assertTrue(type(param) == int)
+        except rospy.exceptions.ROSException as e:
+            self.fail("Failed to launch nodes.")
+        finally:
+            p.shutdown()
+
+
 if __name__ == '__main__':
-    import rosunit
-    rosunit.unitrun('pylaunch', 'test_pylaunch', TestPylaunch)
+    unittest.main()
+
