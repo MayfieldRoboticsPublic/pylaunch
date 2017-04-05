@@ -9,7 +9,6 @@ branches:
 
 env:
   matrix:
-    - ARCH=arm
     - ARCH=x86
 
 notifications:
