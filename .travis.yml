@@ -8,6 +8,8 @@ branches:
     - /^rc-.+$/
 
 env:
+  global:
+    - GIZMO_BASE_DOCKER_IMAGE="mayfieldrobotics/gizmo_base"
   matrix:
     - ARCH=x86
 
@@ -25,9 +27,19 @@ script:
   - |
     repo=$(echo $TRAVIS_REPO_SLUG | cut -d/ -f2)
     if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
-      docker run --rm -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent -v $TRAVIS_BUILD_DIR:/root/$repo \
-        mayfieldrobotics/gizmo_base:ros_indigo_x86 \
-        sh -c "mkdir -pm 700 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts && git clone git@github.com:mayfieldrobotics/embedded-ansible && cd embedded-ansible/deb-build && ./build.py -r /root/$repo -a $TRAVIS_BRANCH -s develop $CATKIN_IGNORE $repo"
+      docker run --rm \
+        -v ${SSH_AUTH_SOCK}:/ssh-agent \
+        -e SSH_AUTH_SOCK=/ssh-agent \
+        -v ${TRAVIS_BUILD_DIR}:/root/${repo} \
+        ${GIZMO_BASE_DOCKER_IMAGE}:${TRAVIS_BRANCH} \
+        sh -c "mkdir -pm 700 ~/.ssh && \
+               ssh-keyscan github.com >> ~/.ssh/known_hosts && \
+               git clone git@github.com:mayfieldrobotics/embedded-ansible && \
+               cd embedded-ansible/deb-build && \
+               ./build.py \
+                  -r /root/${repo} \
+                  -a ${TRAVIS_BRANCH} \
+                  -s develop ${CATKIN_IGNORE} ${repo}"
     else
       docker run --rm \
         -v $TRAVIS_BUILD_DIR:/root/$repo \
