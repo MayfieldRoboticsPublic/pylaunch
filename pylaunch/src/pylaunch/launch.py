@@ -106,7 +106,7 @@ def resource_path(package_name, filename):
                                     % (package_name, filename))
     if len(l) > 1:
         raise RuntimeError("Multiple files named %s found in package %s" \
-                            % (package_name, filename))
+                            % (filename, package_name))
     return l[0]
 
 class FileNotFoundException(Exception):
