@@ -88,13 +88,17 @@ def pkg_path(package_name):
     ros_pack = rospkg.RosPack()
     return ros_pack.get_path(package_name)
 
-def resource_path(package_name, filename):
+def resource_path(package_name, filename, allow_multiple=False):
     '''
         Locates a file known to ROS.
 
         Args:
         package_name (string)
         filename (string) file in package to locate
+        allow_multiple (bool) continue if multiple resources are found
+
+        If allow_multiple is true and multiple files are found, the first
+        option is returned
 
         Returns:
         string path to file
@@ -104,7 +108,8 @@ def resource_path(package_name, filename):
     if len(l) == 0:
         raise FileNotFoundException("Include error. Package %s doesn't containt %s." \
                                     % (package_name, filename))
-    if len(l) > 1:
+
+    if not allow_multiple and len(l > 1):
         raise RuntimeError("Multiple files named %s found searching package %s. Found [[%s]]" \
                             % (filename, package_name, l))
     return l[0]
@@ -227,10 +232,18 @@ class Include(FInclude):
                             an include directive)
 
             rosparams (list): list of RosParam objects
+
+        ***** Temporary Note 12-27-2017 Pete *****
+        The allow_multiple argument is a workaround for gizmo_ros_navigation
+        being found twice.  There's no legitimate use of allow_multiple=True
+        Allegedly the issue is being fixed upstream in ROS here:
+        https://github.com/ros/ros/pull/159
+        For now, a workaround
+        ***** End of temporary Note 12-17-2017 Pete *****
     '''
     def __init__(self, package_name, launch_file_name, remaps=None,
-                 params=None, rosparams=None):
-        filename = resource_path(package_name, launch_file_name)
+                 params=None, rosparams=None, allow_multiple=False):
+        filename = resource_path(package_name, launch_file_name, allow_multiple)
         super(Include, self).__init__(filename, remaps, params, rosparams)
 
 
