@@ -109,7 +109,7 @@ def resource_path(package_name, filename, allow_multiple=False):
         raise FileNotFoundException("Include error. Package %s doesn't containt %s." \
                                     % (package_name, filename))
 
-    if not allow_multiple and len(l > 1):
+    if not allow_multiple and len(l) > 1:
         raise RuntimeError("Multiple files named %s found searching package %s. Found [[%s]]" \
                             % (filename, package_name, l))
     return l[0]
