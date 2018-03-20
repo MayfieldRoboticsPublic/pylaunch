@@ -178,7 +178,7 @@ class FInclude(PyRosLaunchItem):
     '''
 
     def __init__(self, file_path, remaps=None, params=None, rosparams=None):
-        super(PyRosLaunchItem, self).__init__()
+        super(FInclude, self).__init__()
         if not pt.exists(file_path):
             raise RuntimeError("Included file %s does not exist." % file_path)
 
@@ -260,7 +260,7 @@ class RosParam(PyRosLaunchItem):
             namespace (string) scope the params to a namespace
     '''
     def __init__(self, param_file, command='load', namespace=None):
-        super(PyRosLaunchItem, self).__init__()
+        super(RosParam, self).__init__()
         self.command = command
         self.param_file = param_file
         self.namespace = namespace
