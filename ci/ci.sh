@@ -1,7 +1,10 @@
 set -e
 
 apt-get update -qq
-apt-get install -yq build-essential ros-indigo-rospy-tutorials
+apt-get install -yq build-essential ros-indigo-rospy-tutorials python-pip
+
+# Need coverage to generate a nosetest coverage report
+pip install coverage
 
 mkdir -p /root/ws/src
 ln -s /root/pylaunch /root/ws/src/
@@ -11,4 +14,5 @@ cd /root/ws
 catkin_make
 . devel/setup.sh
 
-nosetests -v /root/pylaunch/pylaunch/test
+cd /root/pylaunch/pylaunch
+nosetests -v test
