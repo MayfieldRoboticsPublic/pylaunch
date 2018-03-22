@@ -24,14 +24,4 @@ script:
     docker run --rm \
       -v ${TRAVIS_BUILD_DIR}:/root/${repo} \
       ros:indigo \
-      sh -ce "
-        apt-get update -qq
-        apt-get install -yq build-essential ros-indigo-rospy-tutorials
-        mkdir -p /root/ws/src
-        ln -s /root/${repo} /root/ws/src/
-        . /opt/ros/indigo/setup.sh
-        cd /root/ws
-        catkin_make
-        . devel/setup.sh
-        nosetests /root/ws/src/pylaunch/pylaunch/test/test_pylaunch.py
-      "
+      sh /root/pylaunch/ci/ci.sh
