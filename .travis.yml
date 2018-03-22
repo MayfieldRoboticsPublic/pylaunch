@@ -18,10 +18,14 @@ notifications:
     on_success: change #[always|never|change] # default: change
     on_failure: change #[always|never|change] # default: always
 
+before_install:
+    - sudo pip install flake8
+
 script:
-  - |
-    repo=$(echo $TRAVIS_REPO_SLUG | cut -d/ -f2)
-    docker run --rm \
-      -v ${TRAVIS_BUILD_DIR}:/root/${repo} \
-      ros:indigo \
-      sh /root/pylaunch/ci/ci.sh
+    - flake8 ${TRAVIS_BUILD_DIR} || exit 1
+    - |
+      repo=$(echo $TRAVIS_REPO_SLUG | cut -d/ -f2)
+      docker run --rm \
+        -v ${TRAVIS_BUILD_DIR}:/root/${repo} \
+        ros:indigo \
+        sh /root/pylaunch/ci/ci.sh
