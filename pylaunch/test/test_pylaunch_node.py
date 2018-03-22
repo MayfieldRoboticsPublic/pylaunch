@@ -19,7 +19,7 @@ class TestPylaunchNode(unittest.TestCase):
         self.assertEquals(roslaunch_node.type, "test_node_type")
         self.assertEquals(roslaunch_node.name, "test_node_name")
 
-    def test__respawn(self):
+    def test_respawn(self):
         dut = self.build_dut()
         roslaunch_node = self.pylaunch_node_to_roslaunch_node(dut)
         self.assertEquals(roslaunch_node.respawn, False)
