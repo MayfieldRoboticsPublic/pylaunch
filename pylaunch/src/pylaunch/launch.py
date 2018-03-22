@@ -212,7 +212,9 @@ class FInclude(PyRosLaunchItem):
             child_ns.add_arg(k, value=py_types_to_string(v))
 
         for rp in self.rosparams:
-            rp.set_namespace(rn.ns_join(param_ns, rp.get_namespace()))
+            # FInclude does not support 'namespace' argument, so can't push
+            # rosparams down into a namespace
+            # rp.set_namespace(rn.ns_join(param_ns, rp.get_namespace()))
             rp.process(ros_launch_config)
 
         rloader.process_include_args(child_ns)
