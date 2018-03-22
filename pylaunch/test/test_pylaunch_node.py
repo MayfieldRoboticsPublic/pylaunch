@@ -43,7 +43,7 @@ class TestPylaunchNode(unittest.TestCase):
         )
 
     def pylaunch_node_to_roslaunch_node(self, node):
-        launch_config =  roslaunch.config.ROSLaunchConfig()
+        launch_config = roslaunch.config.ROSLaunchConfig()
         loader = roslaunch.loader.Loader()
 
         # For some reason, pylaunch nodes expect this extra item to be stuffed
@@ -54,7 +54,6 @@ class TestPylaunchNode(unittest.TestCase):
             rosgraph.names.get_ros_namespace(),
             pt.splitext(pt.split(sys.argv[0])[-1])[0]
         )
-
 
         node.process(loader, launch_config)
 
