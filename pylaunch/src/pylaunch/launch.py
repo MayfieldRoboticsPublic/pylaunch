@@ -193,7 +193,7 @@ class FInclude(PyRosLaunchItem):
     '''
 
     def __init__(self, file_path, remaps=None, params=None, rosparams=None):
-        super(PyRosLaunchItem, self).__init__()
+        super(FInclude, self).__init__()
         if not pt.exists(file_path):
             raise RuntimeError("Included file %s does not exist." % file_path)
 
@@ -280,7 +280,7 @@ class RosParam(PyRosLaunchItem):
             namespace (string) scope the params to a namespace
     '''
     def __init__(self, param_file, command='load', namespace=None):
-        super(PyRosLaunchItem, self).__init__()
+        super(RosParam, self).__init__()
         self.command = command
         self.param_file = param_file
         self.namespace = namespace
@@ -364,9 +364,9 @@ class Node(PyRosLaunchItem):
 
     def __init__(self, package_name, node_type, node_name,
                  args=None, params=None, rosparams=None, remaps=None,
-                 namespace='/', respawn=False, output=None,
-                 launch_prefix=None):
-        super(PyRosLaunchItem, self).__init__()
+                 namespace='/', respawn=False, output=None, launch_prefix=None,
+                 respawn_delay=0):
+        super(Node, self).__init__()
         self.package_name = package_name
         self.node_type = node_type
         self.node_name = node_name
@@ -377,6 +377,7 @@ class Node(PyRosLaunchItem):
         self.args = args
         self.namespace = namespace
         self.respawn = respawn
+        self.respawn_delay = respawn_delay
         self.output = output
         self.launch_prefix = launch_prefix
 
@@ -418,6 +419,7 @@ class Node(PyRosLaunchItem):
                             namespace=self.namespace,
                             args=self.args,
                             respawn=self.respawn,
+                            respawn_delay=self.respawn_delay,
                             output=self.output,
                             launch_prefix=self.launch_prefix)
         ros_launch_config.add_node(self.node, self.verbose)
